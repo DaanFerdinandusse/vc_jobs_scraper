@@ -1,5 +1,6 @@
 # Standard
 import logging
+from datetime import datetime
 from typing import List, Dict, Any
 
 # DB interactions
@@ -11,16 +12,6 @@ from scraper.agentql_utils import query_agentql_for_clickable_link
 
 # Url processing
 from urllib.parse import urlparse
-
-
-PORTFOLIO_BTN_OPTIONS: List[str] = [
-    "portfolio_btn",
-    "companies_btn",
-    "investments_btn",
-    "commitments_btn",
-    "partnerships_btn",
-    "family_btn"
-]
 
 
 def fetch_vc_domains() -> List[Dict[str, Any]]:
@@ -50,7 +41,9 @@ def store_portfolio_page_in_db(portfolio_endpoints: List[Dict[str, str]]):
     INSERT INTO public.vc (domain, portfolio_page_endpoint)
     VALUES {records_as_sql_values(portfolio_endpoints)}
     ON CONFLICT (domain)
-    DO UPDATE SET portfolio_page_endpoint = excluded.portfolio_page_endpoint;
+    DO UPDATE 
+    SET portfolio_page_endpoint = excluded.portfolio_page_endpoint,
+        updated_at = excluded.updated_at;
     """
     execute_sql(query, verbose=True)
 
@@ -65,6 +58,15 @@ def scrape_portfolio_page_from_vc_domains():
     3. Process the found links to have them all in the same format.
     4. Store the portfolio page links to their respective VC in the database.
     """
+    PORTFOLIO_BTN_OPTIONS: List[str] = [
+        "portfolio_btn",
+        "companies_btn",
+        "investments_btn",
+        "commitments_btn",
+        "partnerships_btn",
+        "family_btn"
+    ]
+
     db_records: List[Dict[str, Any]] = fetch_vc_domains()
     vc_domains: list[str] = [record['domain'] for record in db_records]
 
@@ -86,7 +88,8 @@ def scrape_portfolio_page_from_vc_domains():
         # Create a record of the portfolio endpoint to store in the database
         portfolio_endpoint_records.append({
             'domain': domain,
-            'portfolio_page_endpoint': portfolio_endpoint
+            'portfolio_page_endpoint': portfolio_endpoint,
+            'updated_at': datetime.now()
         })
 
     store_portfolio_page_in_db(portfolio_endpoint_records)
