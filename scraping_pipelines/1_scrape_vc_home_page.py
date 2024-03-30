@@ -33,6 +33,7 @@ def fetch_vc_domains() -> List[Dict[str, Any]]:
     query: str = """
     SELECT domain
     FROM public.vc
+    WHERE portfolio_page_endpoint IS NULL
     limit 5;
     """
     return execute_sql(query, return_values=True)

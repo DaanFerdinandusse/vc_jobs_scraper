@@ -44,7 +44,7 @@ def query_agentql_for_clickable_link(domain: str, naming_options: list[str], dri
     session: Session = webql.start_session(domain, web_driver=driver)
 
     # Wait for the page to load
-    # driver.wait_for_page_ready_state()
+    driver.wait_for_page_ready_state()
 
     # Generate an agentql query which searches of any button with the given naming options
     query: str = DIFFERENT_NAMING_QUERY_TEMPLATE.format(
