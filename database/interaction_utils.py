@@ -21,7 +21,6 @@ def create_connection() -> pg8000.Connection:
     host: str = os.getenv("DATABASE_HOST")
     database_name: str = os.getenv("DATABASE_NAME")
 
-    logging.info("Creating database connection")
     return pg8000.connect(
         user=user,
         password=pw,
@@ -123,9 +122,9 @@ if __name__ == "__main__":
 
     query = f"""
         SELECT * 
-        FROM public.companies
-        WHERE location = {value_to_sql("London")}
+        FROM public.vc
+        limit 5;
     """
-    res = execute_sql(query, verbose=True)
+    res = execute_sql(query, return_values=True, verbose=True)
 
     print(res)
