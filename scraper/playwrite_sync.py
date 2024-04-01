@@ -54,6 +54,7 @@ def scrape_webpages_content_sync(urls: list[str]) -> list[str]:
 
 
 if __name__ == "__main__":
+    from pathlib import Path
     logging.basicConfig(level=logging.INFO)
 
     URLS = [
@@ -63,4 +64,12 @@ if __name__ == "__main__":
         "https://atomico.com",
         "https://cavalry.vc",
     ]
-    print(scrape_webpages_content_sync(URLS))
+
+    html_contents = scrape_webpages_content_sync(URLS)
+
+    # Create a directory to store the HTML content
+    HTML_EXAMPLE_PATH: Path = Path(__file__).parent.parent / "html_examples"
+    # Store the HTML content in files
+    for url, content in zip(URLS, html_contents):
+        with open(HTML_EXAMPLE_PATH / f"{url.replace('https://', '')}.html", "w") as file:
+            file.write(content)
