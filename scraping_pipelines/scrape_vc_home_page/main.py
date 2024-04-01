@@ -11,7 +11,7 @@ from scraper.playwrite_async import scrape_webpages_content_async
 from scraping_pipelines.scrape_vc_home_page.html_processing import find_all_links_on_page
 
 # OpenAI SDK
-from scraping_pipelines.scrape_vc_home_page.gpt_prompts import determine_portfolio_page_link_with_gpt
+from scraping_pipelines.scrape_vc_home_page.gpt_scraper_assistant import determine_portfolio_page_link_with_gpt
 
 
 def scrape_portfolio_page_from_vc_domains():

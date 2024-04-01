@@ -64,6 +64,7 @@ if __name__ == "__main__":
         "https://creandum.com",
         "https://cherry.vc",
         "https://earlybird.com",
+        "https://earlybird.com/portfolio",
         "https://atomico.com",
         "https://cavalry.vc",
     ]
@@ -74,6 +75,7 @@ if __name__ == "__main__":
     HTML_EXAMPLE_PATH: Path = Path(__file__).parent.parent / "html_examples"
     # Store the HTML content in files
     for url, content in zip(URLS, html_contents):
-        with open(HTML_EXAMPLE_PATH / f"{url.replace('https://', '')}.html", "w") as file:
+        striped_url = url.replace('https://', '').replace('/', '_')
+        with open(HTML_EXAMPLE_PATH / f"{striped_url}.html", "w") as file:
             file.write(content)
 

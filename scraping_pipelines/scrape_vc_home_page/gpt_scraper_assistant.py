@@ -4,8 +4,7 @@ import json
 import logging
 
 # OpenAI SDK
-from openai import OpenAI
-from openai.lib._old_api import ChatCompletion
+from openai import OpenAI, ChatCompletion
 
 
 CLIENT = OpenAI(api_key=os.getenv("PERSONAL_OPEN_AI_API_KEY"))
