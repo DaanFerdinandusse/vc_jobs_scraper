@@ -13,6 +13,9 @@ from scraping_pipelines.scrape_vc_home_page.html_processing import find_all_link
 # OpenAI SDK
 from scraping_pipelines.scrape_vc_home_page.gpt_scraper_assistant import determine_portfolio_page_link_with_gpt
 
+# Url parsing
+from utils.url_parsing import get_domain_name
+
 
 def scrape_portfolio_page_from_vc_domains():
     """
@@ -42,7 +45,7 @@ def scrape_portfolio_page_from_vc_domains():
 
         # Create a record of the portfolio endpoint to store in the database
         portfolio_endpoint_records.append({
-            'domain': domain.strip('https://'),
+            'domain': get_domain_name(domain),
             'portfolio_page_endpoint': portfolio_endpoint,
             'updated_at': datetime.now()
         })

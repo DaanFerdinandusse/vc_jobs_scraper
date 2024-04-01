@@ -125,6 +125,6 @@ if __name__ == "__main__":
         FROM public.vc
         limit 5;
     """
-    res = execute_sql(query, return_values=True, verbose=True)
+    response = execute_sql(query, return_values=True, verbose=True)
 
-    print(res)
+    logging.info(response)

@@ -4,24 +4,15 @@ import json
 import logging
 
 # OpenAI SDK
-from openai import OpenAI, ChatCompletion
+from openai import OpenAI
+from openai.types.chat import ChatCompletion, ChatCompletionMessageToolCall
 
 
 CLIENT = OpenAI(api_key=os.getenv("PERSONAL_OPEN_AI_API_KEY"))
 
 
-def determine_next_scraping_step(extracted_company_text: str) -> str:
+def prompt_gpt_for_next_scraping_step(extracted_company_text: str) -> ChatCompletionMessageToolCall | None:
     """
-    Determine the next scraping step based on one of the company tags found on the portfolio page.
-    VC websites often follow one of the following patterns:
-
-    1. The tag contains the company information directly.
-    2. The tag contains a link to the company subpage (e.g. vc.com/portfolio/company1).
-    3. The tag encapsulates the company but the information is accessible through a different element.
-
-    Additionally, we can also have a problem with identifying the company tag in which case we are in the
-    same situation as option 3.
-
     This function uses GPT function calling to determine the next scraping step.
 
     1. Extract information from tag
@@ -38,6 +29,7 @@ def determine_next_scraping_step(extracted_company_text: str) -> str:
     The overall goal is to extract the information about the portfolio companies of the VC. Given the unstructured text of a sample portfolio company HTML tag, your objective is to decide on the next step in the scraping process. 
 
     The tag can contain the company information directly, a link to the company subpage, or not have the right information in which case we want to stop scraping.
+    Be strict in your decision making. Only extract the information if name and a URL to a company website are available, Only navigate to the company subpage if the subpage_endpoint is available, and skip the VC page if not enough information is available. 
     """
     PROMPT: str = """
     Decide on the next scraping step based on the following sample company tag text:
@@ -88,8 +80,62 @@ def determine_next_scraping_step(extracted_company_text: str) -> str:
         tools=tools,
     )
 
-    response_message = response.choices[0].message
-    return response_message.tool_calls
+    # Extract the first tool call from the response
+    tool_calls = response.choices[0].message.tool_calls
+    return tool_calls[0] if tool_calls else None
+
+
+def extract_company_information(extracted_company_text: str) -> dict[str, str]:
+    """
+    Transforms the raw unstructured text of a company tag into structured company details using GPT.
+    The model is prompted to identify specific information about the company such as
+    name, website and description.
+
+    :param extracted_company_text: Text extracted about the company
+    :return: Structured company information
+    """
+    MODEL: str = "gpt-3.5-turbo-1106"
+    SYSTEM_MESSAGE: str = """
+    You are venture capital (VC) website navigation assistant. 
+
+    The goal is to extract structured information about a portfolio company from the VC. 
+    
+    Given the unstructured text of a sample portfolio company HTML tag, your objective is format the information into a structured manner.
+    """
+    PROMPT: str = """
+    Extract structured information from the following text about a portfolio company:
+    '''
+    {company_text}
+    '''
+
+    Output the following information in json format if it is available, if one of the fields information is not directly available in the text output None for that field. Don't make any assumptions about the data if it is not present.
+    {{
+        "name": str | None,
+        "website": str | None,
+        "linkedin_url": str | None,
+        "description": str | None,
+        "location": str | None,
+        "founded_year": str | None,
+        "invested_year": str | None,
+        "industry": str | None,
+        "round_type": Literal[pre-seed, seed, series-A, series-B, series-C, series-D, series-E, series-F, growth, None] | None
+    }}
+    """
+
+    response: ChatCompletion = CLIENT.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {"role": "system", "content": SYSTEM_MESSAGE},
+            {"role": "user", "content": PROMPT.format(company_text=extracted_company_text)}
+        ],
+        temperature=0,
+        # JSON mode
+        response_format={"type": "json_object"},
+    )
+
+    # Extract the company information from the response
+    response_content: str = response.choices[0].message.content
+    return json.loads(response_content)
 
 
 if __name__ == "__main__":
@@ -118,5 +164,8 @@ Helsinki
 Team
 Digital West
 """
+    function_to_call: ChatCompletionMessageToolCall = prompt_gpt_for_next_scraping_step(EXTRACTED_EXAMPLE_TEXT)
+    logging.info(function_to_call)
 
-    print(determine_next_scraping_step(EXTRACTED_EXAMPLE_TEXT))
+    company_information: dict[str, str] = extract_company_information(extracted_company_text=EXTRACTED_EXAMPLE_TEXT)
+    logging.info(f"Company information: {company_information}")

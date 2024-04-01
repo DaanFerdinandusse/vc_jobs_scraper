@@ -29,16 +29,17 @@ def store_portfolio_page_in_db(portfolio_endpoints: list[dict[str, str]]):
     """
     # Store the portfolio links in the database
     query: str = f"""
-    INSERT INTO public.vc (domain, portfolio_page_endpoint, updated_at)
+    INSERT INTO public.vc (domain, portfolio_page_endpoint)
     VALUES {records_as_sql_values(portfolio_endpoints)}
     ON CONFLICT (domain)
     DO UPDATE 
     SET portfolio_page_endpoint = excluded.portfolio_page_endpoint,
-        updated_at = excluded.updated_at;
+        updated_at = NOW();
     """
     execute_sql(query, verbose=True)
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    print(fetch_vc_domains())
+
+    logging.info(fetch_vc_domains())

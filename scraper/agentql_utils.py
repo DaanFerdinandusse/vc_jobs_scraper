@@ -73,4 +73,4 @@ if __name__ == "__main__":
 
     link: str | None = query_agentql_for_clickable_link(DOMAIN, BTNS, driver)
 
-    print(link)
+    logging.info(link)

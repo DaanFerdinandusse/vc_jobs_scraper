@@ -69,4 +69,4 @@ if __name__ == "__main__":
         '/interests/'
     ]
 
-    print(determine_portfolio_page_link_with_gpt(EXAMPLE_LINKS))
+    logging.info(determine_portfolio_page_link_with_gpt(EXAMPLE_LINKS))

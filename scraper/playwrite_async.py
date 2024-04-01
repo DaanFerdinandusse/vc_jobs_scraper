@@ -64,9 +64,10 @@ if __name__ == "__main__":
         "https://creandum.com",
         "https://cherry.vc",
         "https://earlybird.com",
-        "https://earlybird.com/portfolio",
         "https://atomico.com",
         "https://cavalry.vc",
+        "https://earlybird.com/portfolio",
+        "https://creandum.com/commitments",
     ]
 
     html_contents = asyncio.run(scrape_webpages_content_async(URLS))

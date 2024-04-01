@@ -1,12 +1,12 @@
 # Standard
-import re
 import logging
 
 # HTML parsing
 from bs4 import BeautifulSoup
 
 # Url processing
-from urllib.parse import urlparse
+from utils.url_parsing import get_endpoint
+from utils.html_processing import is_subpage_link
 
 
 def find_all_links_on_page(base_domain: str, page_html: str) -> list[str]:
@@ -17,26 +17,14 @@ def find_all_links_on_page(base_domain: str, page_html: str) -> list[str]:
     :param page_html: HTML content of the webpage
     :return: List of unique subpage endpoints
     """
-    def is_subpage_link(link: str, endpoint: str) -> bool:
-        """Check if the link is a subpage link of the base domain."""
-        # Checks for any weird extensions like .css or .js
-        if not endpoint or re.match(r'.*\..*$', endpoint):
-            return False
-        if link == endpoint:
-            return True
-        if base_domain in link:
-            return True
-
-        return False
-
     soup = BeautifulSoup(page_html, 'html.parser')
     page_endpoints: set = set()
     for tag in soup.find_all(href=True):
         link: str = tag.get('href')
-        endpoint: str = urlparse(link).path
+        endpoint: str = get_endpoint(link)
 
         # Check if the link directs to the same domain as the base domain
-        if is_subpage_link(link, endpoint):
+        if is_subpage_link(link, endpoint, base_domain):
             page_endpoints.add(endpoint)
 
     return list(page_endpoints)
@@ -54,4 +42,4 @@ if __name__ == "__main__":
         html_content: str = file.read()
 
     # Find all the links on the page
-    print(find_all_links_on_page(base_domain=EXAMPLE_DOMAIN, page_html=html_content))
+    logging.info(find_all_links_on_page(base_domain=EXAMPLE_DOMAIN, page_html=html_content))
