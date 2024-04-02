@@ -6,6 +6,9 @@ from time import sleep
 # Playwright
 from playwright.async_api import async_playwright, Browser
 
+# General utilities
+from utils.general import lst_in_batches
+
 
 async def scrape_webpage_content_async(url: str, browser: Browser) -> str:
     """
@@ -43,12 +46,16 @@ async def scrape_webpages_content_async(urls: list[str]) -> list[str]:
     :param urls: List of URLs of the webpages to scrape
     :return: List of HTML content of the webpages
     """
+    BATCH_SIZE = 5
+
+    webpages_content = []
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=False)
-
-        # Scrape the content of each webpage using asyncio.gather for concurrency
-        tasks = [scrape_webpage_content_async(url, browser) for url in urls]
-        webpages_content = await asyncio.gather(*tasks)
+        for batch_urls in lst_in_batches(urls, BATCH_SIZE):
+            # Scrape the content of each webpage using asyncio.gather for concurrency
+            tasks = [scrape_webpage_content_async(url, browser) for url in batch_urls]
+            batch_webpages_content = await asyncio.gather(*tasks)
+            webpages_content.extend(batch_webpages_content)
 
         await browser.close()
 

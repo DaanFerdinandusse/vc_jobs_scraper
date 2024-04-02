@@ -41,6 +41,9 @@ def extract_text_and_links(base_tag: Tag) -> str:
     :param base_tag: The tag to extract text and links from
     :return: Single string with text and links
     """
+    # Create a copy of the tag to avoid modifying the original tag
+    base_tag: Tag = base_tag.__copy__()
+
     # Append link as text to content of the tag
     for tag in base_tag.find_all(href=True):
         tag.contents.append(NavigableString(f" ({tag.get('href')})"))

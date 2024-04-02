@@ -27,6 +27,7 @@ from scraping_pipelines.scrape_vc_portfolio_page.gpt_scraper_assistant import (
 # Url parsing
 from utils.url_parsing import get_domain_name
 
+
 def extract_companies_information(portfolio_companies_tag: Tag) -> list[dict[str, any]]:
     """
     Extract structured information about the portfolio companies from each company tag.
@@ -66,7 +67,7 @@ def extract_from_company_subpage(portfolio_companies_tag: Tag, base_domain: str)
     """
     # Extract the link to the company subpage
     sub_page_links = [
-        extract_first_endpoint(tag, base_domain)
+        f"https://{base_domain}{extract_first_endpoint(tag, base_domain)}"
         for tag in portfolio_companies_tag.children
         if isinstance(tag, Tag)
     ]
@@ -108,6 +109,8 @@ def scrape_portfolio_companies_information():
     page_htmls: list[str] = asyncio.run(scrape_webpages_content_async(vc_portfolio_urls))
 
     for id, domain, page_html in zip(vc_ids, vc_portfolio_urls, page_htmls):
+        if get_domain_name(domain) != 'atomico.com':
+            continue
 
         logging.info(f"Extracting information from: {domain}")
         soup: BeautifulSoup = BeautifulSoup(page_html)
