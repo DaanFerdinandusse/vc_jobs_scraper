@@ -2,7 +2,7 @@
 import logging
 
 
-def pass_through(**kwargs):
+def pass_through(output_previous_node: any = None) -> None:
     """Simply pass through function for testing."""
     pass
 

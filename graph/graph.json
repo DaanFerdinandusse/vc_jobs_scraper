@@ -1,1 +1,1 @@
-{"nodes": [{"id": 1, "function": "pass_through", "input": {"input": 1}}, {"id": 2, "function": "pass_through", "input": {"input": 2}}], "edges": []}
+{"nodes": {"1": {"id": 1, "function": "pass_through", "static_inputs": {}, "node_type": "regular"}, "2": {"id": 2, "function": "pass_through", "static_inputs": {}, "node_type": "regular"}}, "edges": {"1": [2]}}
