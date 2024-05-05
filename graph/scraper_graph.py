@@ -7,6 +7,10 @@ from collections import defaultdict
 # Node dataclasses
 from graph.node import Node
 
+# Result objects
+from graph.result_dataclasses.company import Company
+from graph.constants import RESULT_OBJECT_NAME_TO_DATACLASS_MAP
+
 # Playwright
 from playwright.sync_api import sync_playwright, Browser, Page
 
@@ -16,14 +20,13 @@ class ScraperGraph:
     Class representing a graph of nodes. Each node is an executable step in the scraping process.
     The graph is executed in a depth-first manner, passing the output of each node to its children.
     """
-    def __init__(self):
+    def __init__(self, page_driver: Page, result_object: any = None):
         """Initializes an empty graph. Nodes and edges are stored as dictionaries."""
         self.nodes: dict[int, Node] = {}
         self.edges: dict[int, list[int]] = defaultdict(list)
 
-        # , play_wright_page: Page, result_object: any
-        # self.page = play_wright_page
-        # self.result_object = result_object
+        self.page_driver = page_driver
+        self.result_object = result_object
 
     def execute(self):
         """
@@ -49,6 +52,8 @@ class ScraperGraph:
 
     def add_node(self, node: Node):
         """Add a node to the graph."""
+        if node.node_type == "navigation":
+            node.shared_inputs["page_driver"] = self.page_driver
         self.nodes[node.id] = node
 
     def add_edge(self, parent_node: Node, child_node: Node):
@@ -59,7 +64,8 @@ class ScraperGraph:
         """Transform the graph to a dictionary representation."""
         return {
             "nodes": {i: node.serialize() for i, node in self.nodes.items()},
-            "edges": self.edges
+            "edges": self.edges,
+            "result_object": self.result_object.__class__.__name__ if self.result_object else None
         }
 
     def save_to_file(self, file_path: str):
@@ -67,58 +73,61 @@ class ScraperGraph:
         with open(file_path, "w") as file:
             json.dump(self.serialize(), file)
 
-    def deserialize_node(self, node_dict: dict[str, Any]) -> Node:
-        """Compose a node from a dictionary representation."""
-        if node_dict.get("node_type") == "navigation":
-            node = Node.deserialize(node_dict)
-            # node.page = self.page
-            return node
-        elif node_dict.get("node_type") == "regular":
-            return Node.deserialize(node_dict)
-        else:
-            raise ValueError(f"Invalid node type: {node_dict.get('node_type')}")
-
     @classmethod
-    def deserialize(cls, graph_dict: dict[str, Any]) -> "ScraperGraph":
+    def deserialize(cls, graph_dict: dict[str, Any], page_driver: Page) -> "ScraperGraph":
         """Compose a graph from a dictionary representation."""
-        graph = cls()
+        # Initialize the result object identified by the name for the graph
+        result_object = RESULT_OBJECT_NAME_TO_DATACLASS_MAP[graph_dict["result_object"]]()
+
+        graph = cls(page_driver=page_driver, result_object=result_object)
         for node_dict in graph_dict["nodes"].values():
             node = Node.deserialize(node_dict)
             graph.add_node(node)
         # Transform the dict back to a default dict, ensuring that the keys are integers
         graph.edges = defaultdict(list, {int(k): v for k, v in graph_dict["edges"].items()})
+
         return graph
 
-    @classmethod
-    def from_file(cls, file_path: str) -> "ScraperGraph":
-        """Create a graph from a file."""
-        with open(file_path, "r") as file:
-            graph_dict = json.load(file)
-        return cls.deserialize(graph_dict)
+
+def scraper_graph_from_file(file_path: str, page_driver: Page) -> "ScraperGraph":
+    """
+    Create a graph from a file.
+
+    :param file_path: The path to the file to load the graph configuration from.
+    :param page_driver: Playwright page object for interactions with the websites.
+    :return: The graph object.
+    """
+    with open(file_path, "r") as file:
+        graph_dict = json.load(file)
+    return ScraperGraph.deserialize(graph_dict, page_driver)
 
 
 if __name__ == "__main__":
     from node_functions.flow_control_functions import pass_through
     logging.basicConfig(level=logging.INFO)
 
-    # Create a graph
-    graph = ScraperGraph()
-    node1 = Node(id=1, function=pass_through, static_inputs={})
-    node2 = Node(id=2, function=pass_through, static_inputs={}, node_type="navigation")
-    graph.add_node(node1)
-    graph.add_node(node2)
-    graph.add_edge(node1, node2)
+    with sync_playwright() as p:
+        browser: Browser = p.chromium.launch()
+        page: Page = browser.new_page()
 
-    # Save the graph to a file
-    graph.save_to_file("graph.json")
-    graph_from_file = ScraperGraph.from_file("graph.json")
+        # Create a graph
+        graph = ScraperGraph(page_driver=page, result_object=Company())
+        node1 = Node(id=1, function=pass_through, static_inputs={})
+        node2 = Node(id=2, function=pass_through, static_inputs={}, node_type="navigation")
+        graph.add_node(node1)
+        graph.add_node(node2)
+        graph.add_edge(node1, node2)
 
-    print(graph.serialize())
-    print(graph_from_file.serialize())
+        # Save the graph to a file
+        graph.save_to_file("graph.json")
+        graph_from_file = scraper_graph_from_file("graph.json", page)
 
-    # Check if the graph is the same
-    assert graph.serialize() == graph_from_file.serialize()
-    print("Graph saved and loaded successfully.")
+        print(graph.serialize())
+        print(graph_from_file.serialize())
 
-    graph_from_file.execute()
+        # Check if the graph is the same
+        assert graph.serialize() == graph_from_file.serialize()
+        print("Graph saved and loaded successfully.")
+
+        graph_from_file.execute()
 

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Any, Literal
 
 # Node functions
-from graph.node_name_to_function_map import NODE_NAME_TO_FUNCTION_MAP
+from graph.constants import NODE_NAME_TO_FUNCTION_MAP
 
 
 @dataclass
