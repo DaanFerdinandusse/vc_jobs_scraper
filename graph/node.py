@@ -25,7 +25,7 @@ class Node:
     :param dynamic_inputs: Outputs of the previous nodes in the graph.
     :param context: Inputs shared between nodes.
     """
-    id: int
+    id: str
     function: Callable[..., Any]
     static_inputs: dict[str, any]
     dynamic_inputs: dict[str, any] = field(default_factory=dict)

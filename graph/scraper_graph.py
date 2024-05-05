@@ -19,11 +19,12 @@ class ScraperGraph:
     Class representing a graph of nodes. Each node is an executable step in the scraping process.
     The graph is executed in a depth-first manner, passing the output of each node to its children.
     """
-    def __init__(self, page_driver: Page):
+    def __init__(self, page_driver: Page, start_node_id: str = "1"):
         """Initializes an empty graph. Nodes and edges are stored as dictionaries."""
-        self.nodes: dict[int, Node] = {}
-        self.edges: dict[int, list[int]] = defaultdict(list)
+        self.nodes: dict[str, Node] = {}
+        self.edges: dict[str, list[str]] = defaultdict(list)
 
+        self.start_node_id = start_node_id
         self.page_driver = page_driver
 
     def execute(self):
@@ -32,7 +33,7 @@ class ScraperGraph:
         passing the output to its children.
         """
         # Add the first node to the node stack, which will be executed first
-        nodes_stack: list[Node] = [self.nodes[1]]
+        nodes_stack: list[Node] = [self.nodes[self.start_node_id]]
 
         # Execute the nodes in a depth-first manner
         while nodes_stack:
@@ -61,6 +62,7 @@ class ScraperGraph:
     def serialize(self) -> dict[str, Any]:
         """Transform the graph to a dictionary representation."""
         return {
+            "start_node_id": self.start_node_id,
             "nodes": {i: node.serialize() for i, node in self.nodes.items()},
             "edges": self.edges,
         }
@@ -77,8 +79,9 @@ class ScraperGraph:
         for node_dict in graph_dict["nodes"].values():
             node = Node.deserialize(node_dict)
             graph.add_node(node)
-        # Transform the dict back to a default dict, ensuring that the keys are integers
-        graph.edges = defaultdict(list, {int(k): v for k, v in graph_dict["edges"].items()})
+
+        graph.edges = defaultdict(list, graph_dict["edges"])
+        graph.start_node_id = graph_dict["start_node_id"]
 
         return graph
 
@@ -106,8 +109,8 @@ if __name__ == "__main__":
 
         # Create a graph
         graph = ScraperGraph(page_driver=page)
-        node1 = Node(id=1, function=pass_through, static_inputs={})
-        node2 = Node(id=2, function=add_result_object_to_context, static_inputs={"result_object": Company.__name__})
+        node1 = Node(id="1", function=pass_through, static_inputs={})
+        node2 = Node(id="2", function=add_result_object_to_context, static_inputs={"result_object": Company.__name__})
         graph.add_node(node1)
         graph.add_node(node2)
         graph.add_edge(node1, node2)
