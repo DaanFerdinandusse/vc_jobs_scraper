@@ -16,7 +16,7 @@ class Node:
             (e.g., the URL to scrape, the CSS selector to use, etc.)
         - Dynamic inputs: These are the outputs of the previous nodes in the graph.
             (e.g. a specific element extracted from the HTML)
-        - Shared inputs: These are objects shared between nodes managed by the scraping graph.
+        - context: These are objects shared between nodes managed by the scraping graph.
             (e.g. the browser, the result object, etc.)
 
     :param id: The unique identifier of the node.

@@ -30,7 +30,8 @@ class ScraperGraph:
     def execute(self):
         """
         Execute the steps of the graph in a depth-first manner. Each node is executed once,
-        passing the output to its children.
+        passing the output to its children. Additionally, the context of a node is passed to its children.
+        This ensures that once a context like the result object is set, it is available to all children.
         """
         # Add the first node to the node stack, which will be executed first
         nodes_stack: list[Node] = [self.nodes[self.start_node_id]]
