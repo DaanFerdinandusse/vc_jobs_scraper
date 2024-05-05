@@ -13,5 +13,6 @@ class Company:
     name: str | None = field(default=None)
     description: str | None = field(default=None)
 
-    def __name__(self):
-        return "Comapany"
+    @classmethod
+    def __name__(cls) -> str:
+        return "Company"

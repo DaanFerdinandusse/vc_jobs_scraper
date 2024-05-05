@@ -9,7 +9,6 @@ from graph.node import Node
 
 # Result objects
 from graph.result_dataclasses.company import Company
-from graph.constants import RESULT_OBJECT_NAME_TO_DATACLASS_MAP
 
 # Playwright
 from playwright.sync_api import sync_playwright, Browser, Page
@@ -20,13 +19,12 @@ class ScraperGraph:
     Class representing a graph of nodes. Each node is an executable step in the scraping process.
     The graph is executed in a depth-first manner, passing the output of each node to its children.
     """
-    def __init__(self, page_driver: Page, result_object: any = None):
+    def __init__(self, page_driver: Page):
         """Initializes an empty graph. Nodes and edges are stored as dictionaries."""
         self.nodes: dict[int, Node] = {}
         self.edges: dict[int, list[int]] = defaultdict(list)
 
         self.page_driver = page_driver
-        self.result_object = result_object
 
     def execute(self):
         """
@@ -47,13 +45,13 @@ class ScraperGraph:
 
                 # Add the output of the node to the input of the children
                 child_node.dynamic_inputs["output_previous_node"] = node_output
+                child_node.context = node.context
 
                 nodes_stack.append(child_node)
 
     def add_node(self, node: Node):
         """Add a node to the graph."""
-        if node.node_type == "navigation":
-            node.shared_inputs["page_driver"] = self.page_driver
+        node.context["page_driver"] = self.page_driver
         self.nodes[node.id] = node
 
     def add_edge(self, parent_node: Node, child_node: Node):
@@ -65,7 +63,6 @@ class ScraperGraph:
         return {
             "nodes": {i: node.serialize() for i, node in self.nodes.items()},
             "edges": self.edges,
-            "result_object": self.result_object.__class__.__name__ if self.result_object else None
         }
 
     def save_to_file(self, file_path: str):
@@ -76,10 +73,7 @@ class ScraperGraph:
     @classmethod
     def deserialize(cls, graph_dict: dict[str, Any], page_driver: Page) -> "ScraperGraph":
         """Compose a graph from a dictionary representation."""
-        # Initialize the result object identified by the name for the graph
-        result_object = RESULT_OBJECT_NAME_TO_DATACLASS_MAP[graph_dict["result_object"]]()
-
-        graph = cls(page_driver=page_driver, result_object=result_object)
+        graph = cls(page_driver=page_driver)
         for node_dict in graph_dict["nodes"].values():
             node = Node.deserialize(node_dict)
             graph.add_node(node)
@@ -103,7 +97,7 @@ def scraper_graph_from_file(file_path: str, page_driver: Page) -> "ScraperGraph"
 
 
 if __name__ == "__main__":
-    from node_functions.flow_control_functions import pass_through
+    from node_functions.flow_control_functions import pass_through, add_result_object_to_context
     logging.basicConfig(level=logging.INFO)
 
     with sync_playwright() as p:
@@ -111,9 +105,9 @@ if __name__ == "__main__":
         page: Page = browser.new_page()
 
         # Create a graph
-        graph = ScraperGraph(page_driver=page, result_object=Company())
+        graph = ScraperGraph(page_driver=page)
         node1 = Node(id=1, function=pass_through, static_inputs={})
-        node2 = Node(id=2, function=pass_through, static_inputs={}, node_type="navigation")
+        node2 = Node(id=2, function=add_result_object_to_context, static_inputs={"result_object": Company.__name__})
         graph.add_node(node1)
         graph.add_node(node2)
         graph.add_edge(node1, node2)

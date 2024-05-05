@@ -1,1 +1,1 @@
-{"nodes": {"1": {"id": 1, "function": "pass_through", "static_inputs": {}, "node_type": "regular"}, "2": {"id": 2, "function": "pass_through", "static_inputs": {}, "node_type": "navigation"}}, "edges": {"1": [2]}, "result_object": "Company"}
+{"nodes": {"1": {"id": 1, "function": "pass_through", "static_inputs": {}}, "2": {"id": 2, "function": "add_result_object_to_context", "static_inputs": {"result_object": "Company"}}}, "edges": {"1": [2]}}

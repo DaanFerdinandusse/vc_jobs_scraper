@@ -1,10 +1,10 @@
 # Standard
 import logging
 from dataclasses import dataclass, field
-from typing import Callable, Any, Literal
+from typing import Callable, Any
 
 # Node functions
-from graph.constants import NODE_NAME_TO_FUNCTION_MAP
+from graph.constants.node_functions_map import NODE_NAME_TO_FUNCTION_MAP
 
 
 @dataclass
@@ -23,19 +23,17 @@ class Node:
     :param function: The function to execute when the node is called.
     :param static_inputs: Configuration of the scraping step.
     :param dynamic_inputs: Outputs of the previous nodes in the graph.
-    :param shared_inputs: Inputs shared between nodes.
-    :param node_type: The type of the node. (e.g. "regular", "navigation").
+    :param context: Inputs shared between nodes.
     """
     id: int
     function: Callable[..., Any]
     static_inputs: dict[str, any]
     dynamic_inputs: dict[str, any] = field(default_factory=dict)
-    shared_inputs: dict[str, any] = field(default_factory=dict)
-    node_type: Literal["regular", "navigation"] = field(default="regular")
+    context: dict[str, any] = field(default_factory=dict)
 
     def __call__(self) -> Any:
         """Execute the function of the node."""
-        function_inputs = {**self.static_inputs, **self.dynamic_inputs, **self.shared_inputs}
+        function_inputs = {"node": self, **self.static_inputs, **self.dynamic_inputs, **self.context}
         return self.function(**function_inputs)
 
     def serialize(self) -> dict[str, Any]:
@@ -44,7 +42,6 @@ class Node:
             "id": self.id,
             "function": self.function.__name__,
             "static_inputs": self.static_inputs,
-            "node_type": self.node_type
         }
 
     @classmethod
@@ -54,7 +51,6 @@ class Node:
             id=node_dict["id"],
             function=NODE_NAME_TO_FUNCTION_MAP[node_dict["function"]],
             static_inputs=node_dict["static_inputs"],
-            node_type=node_dict["node_type"],
         )
 
 
