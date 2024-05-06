@@ -22,6 +22,6 @@ if __name__ == "__main__":
 
     pass_through()
 
-    node = Node(id=1, function=pass_through, static_inputs={})
-    add_result_object_to_context(node, Company.__class__.__name__)
+    node = Node(id="1", function=pass_through, static_inputs={})
+    add_result_object_to_context(node, Company.__name__)
     print(node.context)

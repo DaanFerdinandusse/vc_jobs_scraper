@@ -20,7 +20,12 @@ class ScraperGraph:
     The graph is executed in a depth-first manner, passing the output of each node to its children.
     """
     def __init__(self, page_driver: Page, start_node_id: str = "1"):
-        """Initializes an empty graph. Nodes and edges are stored as dictionaries."""
+        """
+        Initializes an empty graph. Nodes and edges are stored as dictionaries.
+
+        :param page_driver: Playwright page object for interactions with the websites.
+        :param start_node_id: The id of the node where the execution should start.
+        """
         self.nodes: dict[str, Node] = {}
         self.edges: dict[str, list[str]] = defaultdict(list)
 
@@ -101,11 +106,11 @@ def scraper_graph_from_file(file_path: str, page_driver: Page) -> "ScraperGraph"
 
 
 if __name__ == "__main__":
-    from node_functions.flow_control_functions import pass_through, add_result_object_to_context
+    from graph.node_functions.flow_control import pass_through, add_result_object_to_context
     logging.basicConfig(level=logging.INFO)
 
     with sync_playwright() as p:
-        browser: Browser = p.chromium.launch()
+        browser: Browser = p.chromium.launch(headless=False)
         page: Page = browser.new_page()
 
         # Create a graph
